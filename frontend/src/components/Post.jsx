@@ -1,4 +1,4 @@
-import { Avatar } from "@material-ui/core";
+import { Avatar } from "@mui/material";
 import {
   ArrowDownwardOutlined,
   ArrowUpwardOutlined,
@@ -6,12 +6,12 @@ import {
   MoreHorizOutlined,
   RepeatOneOutlined,
   ShareOutlined,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 import React, { useState } from "react";
 import "./css/Post.css";
 import { Modal } from "react-responsive-modal";
 import "react-responsive-modal/styles.css";
-import CloseIcon from "@material-ui/icons/Close";
+import CloseIcon from "@mui/icons-material/Close";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import ReactTimeAgo from "react-time-ago";

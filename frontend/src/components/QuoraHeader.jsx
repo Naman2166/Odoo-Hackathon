@@ -1,31 +1,32 @@
 import React, { useState } from "react";
-import HomeIcon from "@material-ui/icons/Home";
-import FeaturedPlayListOutlinedIcon from "@material-ui/icons/FeaturedPlayListOutlined";
-import {
-  AssignmentTurnedInOutlined,
-  // Close,
-  NotificationsOutlined,
-  PeopleAltOutlined,
-  Search,
-  ExpandMore,
-} from "@material-ui/icons";
-import CloseIcon from "@material-ui/icons/Close";
-import { Avatar, Button, Input } from "@material-ui/core";
+import HomeIcon from "@mui/icons-material/Home";
+import FeaturedPlayListOutlinedIcon from "@mui/icons-material/FeaturedPlayListOutlined";
+import AssignmentTurnedInOutlined from "@mui/icons-material/AssignmentTurnedInOutlined";
+import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
+import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
+import SearchIcon from "@mui/icons-material/Search";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import CloseIcon from "@mui/icons-material/Close";
+import Brightness4Icon from "@mui/icons-material/Brightness4";
+import Brightness7Icon from "@mui/icons-material/Brightness7";
+
+import { Avatar, Button, Input, IconButton, Tooltip } from "@mui/material";
+
 import "./css/QuoraHeader.css";
 import { Modal } from "react-responsive-modal";
 import "react-responsive-modal/styles.css";
-import api from '../api'
+import api from '../api';
 import { auth } from "../Firebase";
 import { signOut } from "firebase/auth";
 import { logout, selectUser } from "../feature/userSlice";
 import { useDispatch, useSelector } from "react-redux";
 
-
-function QuoraHeader() {
+function QuoraHeader({ darkMode, toggleDarkMode }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [inputUrl, setInputUrl] = useState("");
-  const [question, setQuestion] = useState("")
-  const Close = <CloseIcon />;
+  const [question, setQuestion] = useState("");
+
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
 
@@ -39,37 +40,37 @@ function QuoraHeader() {
       const body = {
         questionName: question,
         questionUrl: inputUrl,
-        user:user
-        
-
+        user: user,
       };
-      await api
-        .post("/api/questions", body, config)
-        .then((res) => {
-          console.log(res.data);
-          alert(res.data.message);
-          window.location.href = "/";
-        })
-        .catch((e) => {
-          console.log(e);
-          alert("Error in adding question");
-        });
+      try {
+        const res = await api.post("/api/questions", body, config);
+        console.log(res.data);
+        console.log("Question added successfully:", res.data.message);
+        window.location.href = "/";
+      } catch (e) {
+        console.error("Error in adding question:", e);
+        console.log("Error in adding question");
+      }
     }
   };
 
-  const handleLogout = () => {
-    if (window.confirm("Are you sure to logout ?")) {
-      signOut(auth)
-        .then(() => {
-          dispatch(logout());
-          console.log("Logged out");
-        })
-        .catch(() => {
-          console.log("error in logout");
-        });
-    }
+  const handleLogoutConfirm = () => {
+    setIsLogoutConfirmOpen(true);
   };
 
+  const performLogout = () => {
+    signOut(auth)
+      .then(() => {
+        dispatch(logout());
+        console.log("Logged out successfully");
+        setIsLogoutConfirmOpen(false);
+      })
+      .catch((error) => {
+        console.error("Error during logout:", error);
+        console.log("Error in logout");
+        setIsLogoutConfirmOpen(false);
+      });
+  };
 
   return (
     <div className="qHeader">
@@ -77,7 +78,7 @@ function QuoraHeader() {
         <div className="qHeader__logo">
           <img
             src="https://upload.wikimedia.org/wikipedia/commons/1/18/Wikipedia20_animated_Plane.gif"
-            alt="logo"
+            alt="Quora Logo"
           />
         </div>
         <div className="qHeader__icons">
@@ -98,22 +99,31 @@ function QuoraHeader() {
           </div>
         </div>
         <div className="qHeader__input">
-          <Search />
+          <SearchIcon />
           <input type="text" placeholder="Search questions" />
         </div>
         <div className="qHeader__Rem">
-          <span onClick={handleLogout}>
-            <Avatar src={user?.photo} />
+          <Tooltip title={darkMode ? "Switch to light mode" : "Switch to dark mode"}>
+            <IconButton onClick={toggleDarkMode} color="inherit" size="large">
+              {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
+            </IconButton>
+          </Tooltip>
+
+          <span onClick={handleLogoutConfirm}>
+            <Avatar src={user?.photo} alt={user?.displayName || "User Avatar"} />
           </span>
 
-          <Button onClick={() => setIsModalOpen(true)}>Add Question</Button>
+          <Button onClick={() => setIsModalOpen(true)} variant="contained">
+            Add Question
+          </Button>
+
           <Modal
             open={isModalOpen}
-            closeIcon={Close}
             onClose={() => setIsModalOpen(false)}
             closeOnEsc
             center
             closeOnOverlayClick={false}
+            closeIcon={<CloseIcon />}
             styles={{
               overlay: {
                 height: "auto",
@@ -125,19 +135,20 @@ function QuoraHeader() {
               <h5>Share Link</h5>
             </div>
             <div className="modal__info">
-              <Avatar className="avatar" />
+              <Avatar className="avatar" src={user?.photo} alt={user?.displayName || "User Avatar"} />
               <div className="modal__scope">
                 <PeopleAltOutlined />
                 <p>Public</p>
-                <ExpandMore />
+                <ExpandMoreIcon />
               </div>
             </div>
             <div className="modal__Field">
               <Input
                 onChange={(e) => setQuestion(e.target.value)}
                 value={question}
-                type=" text"
+                type="text"
                 placeholder="Start your question with 'What', 'How', 'Why', etc. "
+                fullWidth
               />
               <div
                 style={{
@@ -155,7 +166,7 @@ function QuoraHeader() {
                     padding: "10px",
                     outline: "2px solid #000",
                   }}
-                  placeholder="Optional: inclue a link that gives context"
+                  placeholder="Optional: include a link that gives context"
                 />
                 {inputUrl !== "" && (
                   <img
@@ -164,18 +175,58 @@ function QuoraHeader() {
                       objectFit: "contain",
                     }}
                     src={inputUrl}
-                    alt="displayimage"
+                    alt="Context Image"
                   />
                 )}
               </div>
             </div>
             <div className="modal__buttons">
-              <button className="cancle" onClick={() => setIsModalOpen(false)}>
+              <Button
+                className="cancle"
+                onClick={() => setIsModalOpen(false)}
+                variant="outlined"
+              >
                 Cancel
-              </button>
-              <button onClick={handleSubmit} type="submit" className="add">
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                type="submit"
+                className="add"
+                variant="contained"
+              >
                 Add Question
-              </button>
+              </Button>
+            </div>
+          </Modal>
+
+          <Modal
+            open={isLogoutConfirmOpen}
+            onClose={() => setIsLogoutConfirmOpen(false)}
+            center
+            closeOnEsc
+            closeOnOverlayClick={true}
+            closeIcon={<CloseIcon />}
+            styles={{
+              modal: {
+                padding: "20px",
+                borderRadius: "8px",
+                maxWidth: "400px",
+                textAlign: "center",
+              },
+              closeButton: {
+                top: "10px",
+                right: "10px",
+              },
+            }}
+          >
+            <h4 style={{ marginBottom: "20px" }}>Are you sure you want to logout?</h4>
+            <div style={{ display: "flex", justifyContent: "space-around", gap: "10px" }}>
+              <Button variant="outlined" onClick={() => setIsLogoutConfirmOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="contained" color="primary" onClick={performLogout}>
+                Logout
+              </Button>
             </div>
           </Modal>
         </div>
